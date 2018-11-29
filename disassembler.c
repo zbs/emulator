@@ -32,6 +32,16 @@ void unimplementedInstruction(State8080* state) {
     exit(1);    
 }
 
+void addRegister(State8080* state, uint8_t register) {
+    uint16_t sum = state->a + register;
+    ConditionCodes conditions = state->cc;
+    conditions.z = sum & 0xFF == 0;
+    conditions.cy = sum > 0xFF ? 1 : 0;
+    conditions.p = Parity(sum & 0xFF);
+    conditions.s = sum & 0x80 == 1 ? 1 : 0;
+    conditions.ac = sum & 0xFF;
+}
+
 int emulate(State8080* state) {
     unsigned char *opcode = &state->memory[&state->pc];
     switch(*opcode) {
@@ -41,6 +51,30 @@ int emulate(State8080* state) {
             state->b = opcode[2];
             state->c = opcode[1];
             state->pc += 2;
+            break;
+        case 0x80:
+            addRegister(state, state->b);
+            break;
+        case 0x81:
+            addRegister(state, state->c);
+            break;
+        case 0x82:
+            addRegister(state, state->d);
+            break;
+        case 0x83:
+            addRegister(state, state->e);
+            break;
+        case 0x84:
+            addRegister(state, state->h);
+            break;
+        case 0x85:
+            addRegister(state, state->l);
+            break;
+        case 0x86:
+            addRegister(state, state->memory[(state->h << 8) | state->l]);
+            break;
+        case 0xc6:
+            addRegister(state, opcode[1]);
             break;
         default:
             unimplementedInstruction(state);
